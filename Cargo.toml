@@ -11,3 +11,6 @@ clap = { version = "2.33.3", features = ["yaml"]}
 reqwest = "0.11.9"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.78"
+notify = "4.0.17"
+base64 = "0.13.0"
+futures = "0.3"
