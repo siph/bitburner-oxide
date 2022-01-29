@@ -1,0 +1,12 @@
+name: bitburner-oxide
+version: "0.1.0"
+author: Chris Dawkins
+about: |
+  Application to manage Bitburner game scripts.
+args:
+  - token:
+      short: t
+      long: token
+      help: auth token from game context menu
+      required: true
+      takes_value: true
