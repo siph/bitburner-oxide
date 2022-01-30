@@ -43,10 +43,7 @@ fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
         Some(val) => String::from(val),
         None => String::from(std::env::current_dir().unwrap().to_str().unwrap())
     };
-    let url = match arg_matches.value_of("url") {
-        Some(val) => String::from(val),
-        None => String::from("http://localhost")
-    };
+    let url = String::from("http://localhost");
    Ok(Config {
         bearer_token: String::from(token),
         port: String::from("9990"),
