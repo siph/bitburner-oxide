@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("{:?}", &config);
     let (sender, receiver) = channel();
     let mut watcher = watcher(sender, Duration::from_secs(2)).unwrap();
-    watcher.watch(&config.directory, RecursiveMode::Recursive).unwrap();
+    watcher.watch(&config.directory, RecursiveMode::NonRecursive).unwrap();
     loop {
         match receiver.recv() {
             Ok(event) => handle_event(&config, &event).unwrap(),
