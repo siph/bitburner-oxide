@@ -22,9 +22,3 @@ args:
       help: base directory to look for files
       required: false
       takes_value: true
-  - url:
-      short: u
-      long: url
-      help: url for game server (defaults to http://localhost)
-      required: false
-      takes_value: true
