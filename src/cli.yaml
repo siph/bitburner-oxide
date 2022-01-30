@@ -10,3 +10,9 @@ args:
       help: auth token from game context menu
       required: true
       takes_value: true
+  - directory:
+      short: d
+      long: directory
+      help: base directory to look for files
+      required: false
+      takes_value: true

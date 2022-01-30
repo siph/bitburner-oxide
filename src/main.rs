@@ -13,15 +13,7 @@ use serde::{Serialize};
 use futures::executor::block_on;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let yaml = load_yaml!("cli.yaml");
-    let arg_matches = App::from_yaml(yaml).get_matches();
-    let token = arg_matches.value_of("token").unwrap();
-    let config = Config {
-        bearer_token: token.to_string(),
-        port: String::from("9990"),
-        url: String::from("localhost"),
-        valid_extensions: vec![".script".to_string(), ".js".to_string(), ".ns".to_string(), ".txt".to_string()],
-    };
+    let config = get_config()?;
     let (sender, receiver) = channel();
     let mut watcher = watcher(sender, Duration::from_secs(2)).unwrap();
     watcher.watch("/home/chris/rust", RecursiveMode::Recursive).unwrap();
@@ -32,6 +24,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 }
+
+fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
+    let yaml = load_yaml!("cli.yaml");
+    let arg_matches = App::from_yaml(yaml).get_matches();
+    let token = arg_matches.value_of("token").unwrap();
+    let directory = match arg_matches.value_of("directory") {
+        Some(val) => String::from(val),
+        None => String::from(std::env::current_dir().unwrap().to_str().unwrap())
+    };
+   Ok(Config {
+        bearer_token: String::from(token),
+        port: String::from("9990"),
+        url: String::from("localhost"),
+        valid_extensions: vec![".script".to_string(), ".js".to_string(), ".ns".to_string(), ".txt".to_string()],
+        directory: directory
+    })
+}
+
 
 fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn std::error::Error>> {
     match event {
@@ -70,6 +80,7 @@ struct Config {
     port: String,
     url: String,
     valid_extensions: Vec<String>,
+    directory: String,
 }
 
 #[derive(Debug, Serialize)]
