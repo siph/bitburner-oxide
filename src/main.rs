@@ -2,7 +2,6 @@
 extern crate clap;
 extern crate serde;
 
-use log::{info};
 use std::fs;
 use std::sync::mpsc::channel;
 use std::time::Duration;
