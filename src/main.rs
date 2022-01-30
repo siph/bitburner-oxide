@@ -2,6 +2,7 @@
 extern crate clap;
 extern crate serde;
 
+use log::{info};
 use std::fs;
 use std::sync::mpsc::channel;
 use std::time::Duration;
@@ -14,6 +15,7 @@ use futures::executor::block_on;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = get_config()?;
+    info!("bitburner-oxide initialized with config:\n{:?}", &config);
     let (sender, receiver) = channel();
     let mut watcher = watcher(sender, Duration::from_secs(2)).unwrap();
     watcher.watch("/home/chris/rust", RecursiveMode::Recursive).unwrap();
@@ -49,8 +51,10 @@ fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn s
             if config.valid_extensions.contains(&p.extension().unwrap().to_str().unwrap().to_owned()) {
                 // file contents must be encoded to base64
                 let code = base64::encode(fs::read_to_string(p.as_path()).unwrap());
+                let filename = String::from(p.file_name().unwrap().to_str().unwrap());
+                info!("file change detected for file: {:?}", &filename);
                 let request = BitburnerRequest {
-                    filename: String::from(p.file_name().unwrap().to_str().unwrap()),
+                    filename,
                     code
                 };
                 block_on(send_file(config, request))?;               

@@ -39,6 +39,7 @@ dependencies = [
  "base64",
  "clap",
  "futures",
+ "log",
  "notify",
  "reqwest",
  "serde",
