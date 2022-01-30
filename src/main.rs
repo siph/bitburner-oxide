@@ -13,7 +13,8 @@ use reqwest::{Error, Response};
 use serde::{Serialize};
 use futures::executor::block_on;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = get_config()?;
     println!("bitburner-oxide initialized with config:\n{:?}", &config);
     let (sender, receiver) = channel();
