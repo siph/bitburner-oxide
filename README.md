@@ -1,11 +1,10 @@
 # Bitburner-oxide
 
-Bitburner-oxide is an editor agnostic file-manager for the game [Bitburner](https://github.com/danielyxie/bitburner).  
+Bitburner-oxide is an editor-agnostic file manager for the game [Bitburner](https://github.com/danielyxie/bitburner).
+Bitburner-oxide allows you to edit scripts externally from the game.  
 
 The purpose of Bitburner-oxide is to fill the void for other editors (vim, emacs, sublime text) that [bitburner-vscode](https://github.com/bitburner-official/bitburner-vscode) fills for vscode; although bitburner-oxide also works with vscode.  
 
-
-*Bitburner-oxide has only been tested on linux systems*  
 ```text
 Bitburner-oxide will automatically push modified or created script files to a running Bitburner game server.
 If ran from the same directory as the scripts the --directory flag is not needed.
@@ -27,30 +26,27 @@ OPTIONS:
 ## Build Instructions
 ### Linux
 ```bash
+$ git clone 'https://gitlab.com/xsiph/bitburner-oxide.git'
+```
+```bash
 # To add to PATH and call directly from the command line.
 $ cargo build --release && cp target/release/bitburner-oxide ~/.local/bin/
 ```
 
 ### Mac / Windows
-I have no idea if this works on Mac or Windows. There is nothing platform specific in the code, so I assume it should?
+I have no idea if this works on Mac or Windows. There is nothing platform specific in the code, so I assume it should?  
+If not, try docker.
 
 # Docker
-***Docker images do not currently work!!!!***  
-*This is because the Bitburner game server does not accept external connections.*
 ## Build
+```bash
+$ git clone 'https://gitlab.com/xsiph/bitburner-oxide.git'
+```
 ```bash
 $ docker build -t xsiph/bitburner-oxide .
 ```
 ## Run
-### Linux
 ```bash
 # run from directory with script files
-$ docker run --rm -v "$PWD:$PWD" -w "$PWD" --add-host host.docker.internal:host-gateway xsiph/bitburner-oxide \
--t '<bearer-token>' -u 'http://host.docker.internal'
-```
-### Mac / Windows
-```bash
-# run from directory with script files
-$ docker run --rm -v "$PWD:$PWD" -w "$PWD" xsiph/bitburner-oxide \
--t '<bearer-token>' -u 'http://host.docker.internal'
+$ docker run --network host --rm -v "$PWD:$PWD" -w "$PWD" xsiph/bitburner-oxide -t '<bearer-token>'
 ```
