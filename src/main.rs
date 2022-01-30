@@ -7,7 +7,7 @@ use std::sync::mpsc::channel;
 use std::time::Duration;
 use clap::App;
 use notify::{DebouncedEvent, RecursiveMode, Watcher, watcher};
-use notify::DebouncedEvent::{Create, Remove, Write};
+use notify::DebouncedEvent::{Create, Remove, Write, Chmod};
 use reqwest::{Error, Response};
 use serde::{Serialize};
 use futures::executor::block_on;
@@ -48,7 +48,7 @@ fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
 fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn std::error::Error>> {
     println!("event: {:?}", event);
     match event {
-        Write(p) | Create(p) => {
+        Write(p) | Create(p) | Chmod(p) => {
             if p.extension().is_some() && config.valid_extensions.contains(&p.extension().unwrap().to_str().unwrap().to_owned()) {
                 // file contents must be encoded to base64
                 let code = base64::encode(fs::read_to_string(p.as_path()).unwrap());
