@@ -15,10 +15,10 @@ use futures::executor::block_on;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = get_config()?;
-    info!("bitburner-oxide initialized with config:\n{:?}", &config);
+    println!("bitburner-oxide initialized with config:\n{:?}", &config);
     let (sender, receiver) = channel();
     let mut watcher = watcher(sender, Duration::from_secs(2)).unwrap();
-    watcher.watch("/home/chris/rust", RecursiveMode::Recursive).unwrap();
+    watcher.watch(&config.directory, RecursiveMode::Recursive).unwrap();
     loop {
         match receiver.recv() {
             Ok(event) => handle_event(&config, &event).unwrap(),
@@ -38,21 +38,22 @@ fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
    Ok(Config {
         bearer_token: String::from(token),
         port: String::from("9990"),
-        url: String::from("localhost"),
-        valid_extensions: vec![".script".to_string(), ".js".to_string(), ".ns".to_string(), ".txt".to_string()],
+        url: String::from("http://localhost"),
+        valid_extensions: vec!["script".to_string(), "js".to_string(), "ns".to_string(), "txt".to_string()],
         directory: directory
     })
 }
 
 
 fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn std::error::Error>> {
+    println!("event: {:?}", event);
     match event {
         Write(p) | Create(p) => {
-            if config.valid_extensions.contains(&p.extension().unwrap().to_str().unwrap().to_owned()) {
+            if p.extension().is_some() && config.valid_extensions.contains(&p.extension().unwrap().to_str().unwrap().to_owned()) {
                 // file contents must be encoded to base64
                 let code = base64::encode(fs::read_to_string(p.as_path()).unwrap());
                 let filename = String::from(p.file_name().unwrap().to_str().unwrap());
-                info!("file change detected for file: {:?}", &filename);
+                println!("file change detected for file: {:?}", &filename);
                 let request = BitburnerRequest {
                     filename,
                     code
@@ -60,7 +61,7 @@ fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn s
                 block_on(send_file(config, request))?;               
             }
         },
-        Remove(path) => println!("filename: {:?}",path.file_name().unwrap()),
+        Remove(path) => println!("file deleted: {:?}",path.file_name().unwrap()),
         _ => ()
     }
     Ok(())
