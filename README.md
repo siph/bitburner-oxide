@@ -33,3 +33,24 @@ $ cargo build --release && cp target/release/bitburner-oxide ~/.local/bin/
 
 ### Mac / Windows
 I have no idea if this works on Mac or Windows. There is nothing platform specific in the code, so I assume it should?
+
+# Docker
+***Docker images do not currently work!!!!***  
+*This is because the Bitburner game server does not accept external connections.*
+## Build
+```bash
+$ docker build -t xsiph/bitburner-oxide .
+```
+## Run
+### Linux
+```bash
+# run from directory with script files
+$ docker run --rm -v "$PWD:$PWD" -w "$PWD" --add-host host.docker.internal:host-gateway xsiph/bitburner-oxide \
+-t '<bearer-token>' -u 'http://host.docker.internal'
+```
+### Mac / Windows
+```bash
+# run from directory with script files
+$ docker run --rm -v "$PWD:$PWD" -w "$PWD" xsiph/bitburner-oxide \
+-t '<bearer-token>' -u 'http://host.docker.internal'
+```
