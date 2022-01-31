@@ -53,15 +53,14 @@ fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
         Err(_) => {
             match arg_matches.value_of("token") {
                 Some(val) => val.to_string(),
-                None => panic!("Must set a token value through --token; or place in file name 'token'")
+                None => panic!("Must set a token value through --token; or place it in a file named 'token'")
             }
         }
     };
-    let url = String::from("http://localhost");
     Ok(Config {
         bearer_token: String::from(token),
         port: String::from("9990"),
-        url: url,
+        url: String::from("http://localhost"),
         valid_extensions: vec!["script".to_string(), "js".to_string(), "ns".to_string(), "txt".to_string()],
         directory: directory
     })
@@ -70,11 +69,10 @@ fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
 fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn std::error::Error>> {
     debug!("event: {:?}", event);
     match event {
-        Write(p) | Create(p) | Chmod(p) => {
-            if p.extension().is_some() && config.valid_extensions.contains(&p.extension().unwrap().to_str().unwrap().to_owned()) {
-                // file contents must be encoded to base64
-                let code = base64::encode(fs::read_to_string(p.as_path()).unwrap());
-                let filename = String::from(p.file_name().unwrap().to_str().unwrap());
+        Write(file) | Create(file) | Chmod(file) => {
+            if file.extension().is_some() && config.valid_extensions.contains(&file.extension().unwrap().to_str().unwrap().to_owned()) {
+                let code = base64::encode(fs::read_to_string(file.as_path()).unwrap());
+                let filename = String::from(file.file_name().unwrap().to_str().unwrap());
                 info!("file change detected for file: {:?}", &filename);
                 let request = BitburnerRequest {
                     filename,
