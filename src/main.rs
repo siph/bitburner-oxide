@@ -6,6 +6,7 @@ extern crate serde;
 
 use env_logger::Env;
 use std::fs;
+use std::path::Path;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 use clap::App;
@@ -38,13 +39,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
     let yaml = load_yaml!("cli.yaml");
     let arg_matches = App::from_yaml(yaml).get_matches();
-    let token = arg_matches.value_of("token").unwrap();
     let directory = match arg_matches.value_of("directory") {
         Some(val) => String::from(val),
         None => String::from(std::env::current_dir().unwrap().to_str().unwrap())
     };
+    let token_path = String::from(Path::new(&directory).join("token").to_str().unwrap());
+    debug!("looking for token at: {:?}", &token_path);
+    let token = match fs::read_to_string(token_path) {
+        Ok(val) => {
+            info!("Found token file");
+            String::from(val.trim())
+        },
+        Err(_) => {
+            match arg_matches.value_of("token") {
+                Some(val) => val.to_string(),
+                None => panic!("Must set a token value through --token; or place in file name 'token'")
+            }
+        }
+    };
     let url = String::from("http://localhost");
-   Ok(Config {
+    Ok(Config {
         bearer_token: String::from(token),
         port: String::from("9990"),
         url: url,
