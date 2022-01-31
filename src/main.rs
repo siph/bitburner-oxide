@@ -12,12 +12,9 @@ use std::time::Duration;
 use clap::App;
 use notify::{DebouncedEvent, RecursiveMode, Watcher, watcher};
 use notify::DebouncedEvent::{Create, Remove, Write, Chmod};
-use reqwest::{Error, Response};
 use serde::{Serialize};
-use futures::executor::block_on;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let env = Env::default()
         .filter_or("LOG_LEVEL", "info")
         .write_style_or("LOG_STYLE", "always");
@@ -26,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("bitburner-oxide initialized with config:");
     info!("{:?}", &config);
     let (sender, receiver) = channel();
-    let mut watcher = watcher(sender, Duration::from_secs(2)).unwrap();
+    let mut watcher = watcher(sender, Duration::from_secs(1)).unwrap();
     watcher.watch(&config.directory, RecursiveMode::NonRecursive).unwrap();
     loop {
         match receiver.recv() {
@@ -78,7 +75,10 @@ fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn s
                     filename,
                     code
                 };
-                block_on(send_file(config, request))?;               
+                match send_file(config, request) {
+                    Ok(res) => debug!("Response: {:?}", res),
+                    Err(e) => error!("Network error: {:?}", e)
+                }
             }
         },
         Remove(path) => trace!("file deleted: {:?}",path.file_name().unwrap()),
@@ -87,8 +87,8 @@ fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn s
     Ok(())
 }
 
-async fn send_file(config: &Config, bitburner_request: BitburnerRequest) -> Result<Response, Error> {
-    let client = reqwest::Client::new();
+fn send_file(config: &Config, bitburner_request: BitburnerRequest) -> Result<reqwest::blocking::Response, reqwest::Error> {
+    let client = reqwest::blocking::Client::new();
     let body = serde_json::to_string(&bitburner_request).unwrap();
     let url = format!("{}:{}", config.url, config.port);
     let token = config.bearer_token.clone();
@@ -96,7 +96,6 @@ async fn send_file(config: &Config, bitburner_request: BitburnerRequest) -> Resu
         .bearer_auth(token)
         .body(body)
         .send()
-        .await
 }
 
 #[derive(Debug)]
