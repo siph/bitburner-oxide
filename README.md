@@ -18,7 +18,7 @@ Bitburner-oxide does not currently support deleting, or pulling files from the g
 Source for bitburner-oxide can be found at https://www.gitlab.com/xsiph/bitburner-oxide
 
 USAGE:
-    bitburner-oxide [OPTIONS] --token <token>
+    bitburner-oxide [OPTIONS]
 
 FLAGS:
     -h, --help       Prints help information
