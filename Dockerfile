@@ -1,6 +1,7 @@
 FROM clux/muslrust AS builder
 WORKDIR /volume
 COPY . .
+RUN cargo test
 RUN cargo build --release
 
 FROM alpine
