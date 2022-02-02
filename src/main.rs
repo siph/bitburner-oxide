@@ -121,13 +121,11 @@ struct BitburnerRequest {
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
-
     use mockito::mock;
-    use reqwest::StatusCode;
     use super::*;
 
     #[test]
-    fn assert_write_even_is_successful() {
+    fn assert_write_event_is_successful() {
         let _m = mock("PUT", "/")
             .with_status(200)
             .with_body("written")
@@ -135,13 +133,6 @@ mod tests {
         let config = get_mock_config();
         let event = DebouncedEvent::Write(PathBuf::from(""));
         assert!(handle_event(&config, &event).is_ok());
-    }
-
-    fn get_mock_request(filename: &str, code: &str) -> BitburnerRequest {
-        BitburnerRequest {
-            filename: String::from(filename),
-            code: String::from(code),
-        }
     }
 
     fn get_mock_config() -> Config {
