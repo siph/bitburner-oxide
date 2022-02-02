@@ -13,6 +13,8 @@ use clap::App;
 use notify::{DebouncedEvent, RecursiveMode, Watcher, watcher};
 use notify::DebouncedEvent::{Create, Remove, Write, Chmod};
 use serde::{Serialize};
+#[cfg(test)]
+use mockito;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let env = Env::default()
@@ -90,7 +92,10 @@ fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn s
 fn send_file(config: &Config, bitburner_request: BitburnerRequest) -> Result<reqwest::blocking::Response, reqwest::Error> {
     let client = reqwest::blocking::Client::new();
     let body = serde_json::to_string(&bitburner_request).unwrap();
+    #[cfg(not(test))]
     let url = format!("{}:{}", config.url, config.port);
+    #[cfg(test)]
+    let url = &mockito::server_url();
     let token = config.bearer_token.clone();
     return client.put(url)
         .bearer_auth(token)
@@ -111,4 +116,39 @@ struct Config {
 struct BitburnerRequest {
     filename: String,
     code: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use mockito::mock;
+    use reqwest::StatusCode;
+    use super::*;
+
+    #[test]
+    fn assert_write_even_is_successful() {
+        let _m = mock("PUT", "/")
+            .with_status(200)
+            .with_body("written")
+            .create();
+        let config = get_mock_config();
+        let event = DebouncedEvent::Write(PathBuf::from(""));
+        assert!(handle_event(&config, &event).is_ok());
+    }
+
+    fn get_mock_request(filename: &str, code: &str) -> BitburnerRequest {
+        BitburnerRequest {
+            filename: String::from(filename),
+            code: String::from(code),
+        }
+    }
+
+    fn get_mock_config() -> Config {
+        Config { bearer_token: String::from("token"), 
+            port: String::from("9990"),
+            url: String::from("url"),
+            valid_extensions: vec![String::from("")],
+            directory: String::from("") }
+    }
 }
