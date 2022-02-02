@@ -3,18 +3,18 @@ extern crate clap;
 #[macro_use]
 extern crate log;
 extern crate serde;
+#[cfg(test)]
+use mockito;
 
 use env_logger::Env;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::time::Duration;
 use clap::App;
 use notify::{DebouncedEvent, RecursiveMode, Watcher, watcher};
 use notify::DebouncedEvent::{Create, Remove, Write, Chmod};
 use serde::{Serialize};
-#[cfg(test)]
-use mockito;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let env = Env::default()
@@ -69,38 +69,67 @@ fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn s
     debug!("event: {:?}", event);
     match event {
         Write(file) | Create(file) | Chmod(file) => {
-            if file.extension().is_some() && config.valid_extensions.contains(&file.extension().unwrap().to_str().unwrap().to_owned()) {
+            if is_valid_file(&file, &config) {
                 let code = base64::encode(fs::read_to_string(file.as_path()).unwrap());
                 let filename = String::from(file.file_name().unwrap().to_str().unwrap());
                 info!("file change detected for file: {:?}", &filename);
-                let request = BitburnerRequest {
+                let bitburner_request = BitburnerRequest {
                     filename,
-                    code
+                    code: Some(code)
                 };
-                match send_file(config, request) {
+                match write_file_to_server(config, &bitburner_request) {
                     Ok(res) => debug!("Response: {:?}", res),
                     Err(e) => error!("Network error: {:?}", e)
                 }
             }
         },
-        Remove(path) => trace!("file deleted: {:?}",path.file_name().unwrap()),
-        _ => ()
+        Remove(file) => {
+            // TODO: remove false from condition to enable file deletion once feature is enabled in game.
+            if is_valid_file(&file, &config) && false {
+                let filename = String::from(file.file_name().unwrap().to_str().unwrap());
+                trace!("file deleted: {:?}",file.file_name().unwrap());
+                let bitburner_request = BitburnerRequest {
+                    filename: filename,
+                    code: None
+                };
+                match delete_file_from_server(config, &bitburner_request) {
+                    Ok(res) => debug!("Response: {:?}", res),
+                    Err(e) => error!("Network error: {:?}", e)
+                }
+            }
+        },
+        unhandled_event => debug!("Unhandled event: {:?}", unhandled_event)
     }
     Ok(())
 }
 
-fn send_file(config: &Config, bitburner_request: BitburnerRequest) -> Result<reqwest::blocking::Response, reqwest::Error> {
-    let client = reqwest::blocking::Client::new();
-    let body = serde_json::to_string(&bitburner_request).unwrap();
+fn is_valid_file(path_buf: &PathBuf, config: &Config) -> bool {
+    path_buf.extension().is_some() && config.valid_extensions.contains(&path_buf.extension().unwrap().to_str().unwrap().to_owned())
+}
+
+fn delete_file_from_server(config: &Config, bitburner_request: &BitburnerRequest) -> Result<reqwest::blocking::Response, reqwest::Error> {
+    send_request(config, bitburner_request, reqwest::Method::DELETE)
+}
+
+fn write_file_to_server(config: &Config, bitburner_request: &BitburnerRequest) -> Result<reqwest::blocking::Response, reqwest::Error> {
+    send_request(config, bitburner_request, reqwest::Method::PUT)
+}
+
+fn send_request(config: &Config, bitburner_request: &BitburnerRequest, method: reqwest::Method) -> Result<reqwest::blocking::Response, reqwest::Error> {
     #[cfg(not(test))]
     let url = format!("{}:{}", config.url, config.port);
     #[cfg(test)]
     let url = &mockito::server_url();
+    let body = serde_json::to_string(&bitburner_request).unwrap();
+    let client = reqwest::blocking::Client::new();
     let token = config.bearer_token.clone();
-    return client.put(url)
-        .bearer_auth(token)
-        .body(body)
-        .send()
+    match method {
+        reqwest::Method::PUT => client.put(url),
+        reqwest::Method::DELETE => client.delete(url),
+        _ => client.get(url),
+    }.bearer_auth(token)
+     .body(body)
+     .send()
 }
 
 #[derive(Debug)]
@@ -115,7 +144,7 @@ struct Config {
 #[derive(Debug, Serialize)]
 struct BitburnerRequest {
     filename: String,
-    code: String,
+    code: Option<String>,
 }
 
 #[cfg(test)]
@@ -132,6 +161,17 @@ mod tests {
             .create();
         let config = get_mock_config();
         let event = DebouncedEvent::Write(PathBuf::from(""));
+        assert!(handle_event(&config, &event).is_ok());
+    }
+
+    #[test]
+    fn assert_remove_event_is_successful() {
+        let _m = mock("DELETE", "/")
+            .with_status(200)
+            .with_body("deleted")
+            .create();
+        let config = get_mock_config();
+        let event = DebouncedEvent::Remove(PathBuf::from(""));
         assert!(handle_event(&config, &event).is_ok());
     }
 
