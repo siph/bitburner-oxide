@@ -84,10 +84,9 @@ fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn s
             }
         },
         Remove(file) => {
-            // TODO: remove false from condition to enable file deletion once feature is enabled in game.
-            if is_valid_file(&file, &config) && false {
+            if is_valid_file(&file, &config) {
                 let filename = String::from(file.file_name().unwrap().to_str().unwrap());
-                trace!("file deleted: {:?}",file.file_name().unwrap());
+                info!("file deleted: {:?}",file.file_name().unwrap());
                 let bitburner_request = BitburnerRequest {
                     filename: filename,
                     code: None
