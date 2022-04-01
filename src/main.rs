@@ -21,6 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter_or("LOG_LEVEL", "info")
         .write_style_or("LOG_STYLE", "always");
     env_logger::init_from_env(env);
+    info!("bitburner-oxide version {:?}", crate_version!());
     let config = get_config()?;
     info!("bitburner-oxide initialized with config:");
     info!("{:?}", &config);
