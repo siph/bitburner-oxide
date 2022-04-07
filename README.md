@@ -14,7 +14,6 @@ All managed files must exist in the top level directory; bitburner-oxide does no
 Authentication is done by passing in the bearer-token via --token. 
 Alternatively, the bearer-token can be placed in a file named 'token' in the chosen directory.
 
-Bitburner-oxide does not currently support deleting, or pulling files from the game server.
 Source for bitburner-oxide can be found at https://www.gitlab.com/xsiph/bitburner-oxide
 
 USAGE:
