@@ -11,18 +11,18 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::time::Duration;
-use clap::App;
+use clap::Parser;
 use notify::{DebouncedEvent, RecursiveMode, Watcher, watcher};
 use notify::DebouncedEvent::{Create, Remove, Write, Chmod};
-use serde::{Serialize};
+use serde::Serialize;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let env = Env::default()
         .filter_or("LOG_LEVEL", "info")
         .write_style_or("LOG_STYLE", "always");
     env_logger::init_from_env(env);
-    info!("bitburner-oxide version {:?}", crate_version!());
     let config = get_config()?;
+    info!("bitburner-oxide version {:?}", crate_version!());
     info!("bitburner-oxide initialized with config:");
     info!("{:?}", &config);
     let (sender, receiver) = channel();
@@ -34,36 +34,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => error!("error: {:?}", e),
         }
     }
-}
-
-fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
-    let yaml = load_yaml!("cli.yaml");
-    let arg_matches = App::from_yaml(yaml).get_matches();
-    let directory = match arg_matches.value_of("directory") {
-        Some(val) => String::from(val),
-        None => String::from(std::env::current_dir().unwrap().to_str().unwrap())
-    };
-    let token_path = String::from(Path::new(&directory).join("token").to_str().unwrap());
-    debug!("looking for token at: {:?}", &token_path);
-    let token = match fs::read_to_string(token_path) {
-        Ok(val) => {
-            info!("Found token file");
-            String::from(val.trim())
-        },
-        Err(_) => {
-            match arg_matches.value_of("token") {
-                Some(val) => val.to_string(),
-                None => panic!("Must set a token value through --token; or place it in a file named 'token'")
-            }
-        }
-    };
-    Ok(Config {
-        bearer_token: String::from(token),
-        port: String::from("9990"),
-        url: String::from("http://localhost"),
-        valid_extensions: vec!["script".to_string(), "js".to_string(), "ns".to_string(), "txt".to_string()],
-        directory: directory
-    })
 }
 
 fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn std::error::Error>> {
@@ -132,6 +102,54 @@ fn send_request(config: &Config, bitburner_request: &BitburnerRequest, method: r
      .send()
 }
 
+fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
+    let args = AppArgs::parse();
+    let directory = match args.directory {
+        Some(val) => String::from(val),
+        None => String::from(std::env::current_dir().unwrap().to_str().unwrap())
+    };
+    let token_path = String::from(Path::new(&directory).join("token").to_str().unwrap());
+    debug!("looking for token at: {:?}", &token_path);
+    let token = match fs::read_to_string(token_path) {
+        Ok(val) => {
+            info!("Found token file");
+            String::from(val.trim())
+        },
+        Err(_) => {
+            match args.bearer_token {
+                Some(val) => val.to_string(),
+                None => panic!("Must set a token value through --token; or place it in a file named 'token'")
+            }
+        }
+    };
+    Ok(Config {
+        bearer_token: String::from(token),
+        directory: directory,
+        ..Default::default()
+    })
+}
+
+/// Bitburner-oxide will automatically push modified or created script files to a running Bitburner game server.   
+/// 
+/// If ran from the same directory as the scripts the --directory flag is not needed.   
+/// All managed files must exist in the top level directory; bitburner-oxide does not manage nested folders.   
+/// 
+/// Authentication is done by passing in the bearer-token via --token.   
+/// Alternatively, the bearer-token can be placed in a file named 'token' in the chosen directory.   
+/// 
+/// Source for bitburner-oxide can be found at https://www.gitlab.com/xsiph/bitburner-oxide   
+
+#[derive(Debug, Parser)]
+#[clap(author, version, about)]
+struct AppArgs {
+    /// auth token from game menu bar
+    #[clap(short, long)]
+    bearer_token: Option<String>,
+    /// base directory to synchronize files
+    #[clap(short, long)]
+    directory: Option<String>,
+}
+
 #[derive(Debug)]
 struct Config {
     bearer_token: String,
@@ -139,6 +157,18 @@ struct Config {
     url: String,
     valid_extensions: Vec<String>,
     directory: String,
+}
+
+impl Default for Config {
+    fn default() -> Config {
+        Config {
+            bearer_token: String::from(""),
+            port: String::from("9990"),
+            url: String::from("http://localhost"),
+            valid_extensions: vec!["script".to_string(), "js".to_string(), "ns".to_string(), "txt".to_string()],
+            directory: String::from(""),
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
