@@ -1,8 +1,8 @@
 [package]
 name = "bitburner-oxide"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Chris Dawkins"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
