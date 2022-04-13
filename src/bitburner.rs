@@ -1,7 +1,6 @@
 #[cfg(test)]
 use mockito;
 use serde::Serialize;
-
 use crate::config::Config;
 
 pub fn delete_file_from_server(config: &Config, bitburner_request: &BitburnerRequest) -> Result<reqwest::blocking::Response, reqwest::Error> {
@@ -12,7 +11,7 @@ pub fn write_file_to_server(config: &Config, bitburner_request: &BitburnerReques
     send_request(config, bitburner_request, reqwest::Method::PUT)
 }
 
-pub fn send_request(config: &Config, bitburner_request: &BitburnerRequest, method: reqwest::Method) -> Result<reqwest::blocking::Response, reqwest::Error> {
+fn send_request(config: &Config, bitburner_request: &BitburnerRequest, method: reqwest::Method) -> Result<reqwest::blocking::Response, reqwest::Error> {
     #[cfg(not(test))]
     let url = format!("{}:{}", config.url, config.port);
     #[cfg(test)]
