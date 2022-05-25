@@ -14,10 +14,18 @@ use anyhow::Result;
 use env_logger::Env;
 use std::sync::mpsc::channel;
 use std::time::Duration;
-use notify::{RecursiveMode, Watcher, watcher};
+use notify::{
+    RecursiveMode, 
+    Watcher, 
+    watcher
+};
 use handler::handle_event;
 #[allow(unused_imports)]
-use config::{ Config, get_config, get_mock_config };
+use config::{ 
+    Config, 
+    get_config, 
+    get_mock_config 
+};
 
 #[cfg(not(test))]
 pub static CONFIG: Lazy<Config> = Lazy::new(|| { get_config().expect("Unable to initialize configuration") });

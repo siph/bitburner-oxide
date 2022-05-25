@@ -8,7 +8,13 @@ use log::{
     info,
     error,
 };
-use notify::DebouncedEvent::{Write, Create, Chmod, Remove, self};
+use notify::DebouncedEvent::{
+    Write, 
+    Create, 
+    Chmod, 
+    Remove, 
+    self,
+};
 use crate::{
     CONFIG,
     bitburner::{

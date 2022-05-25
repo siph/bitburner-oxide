@@ -1,11 +1,11 @@
 use anyhow::Result;
 use std::{
     path::Path, 
-    fs
+    fs,
 };
 use log::{
     info, 
-    debug
+    debug,
 };
 use clap::Parser;
 use crate::app_args::AppArgs;

@@ -6,7 +6,10 @@ use reqwest::{
     blocking::Response,
     Error,
 };
-use log::{ info, debug };
+use log::{ 
+    info, 
+    debug,
+};
 
 pub fn delete_file_from_server(bitburner_request: &BitburnerRequest) -> Result<Response, Error> {
     send_request(bitburner_request, reqwest::Method::DELETE)
