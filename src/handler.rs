@@ -1,7 +1,7 @@
 use anyhow::{ Result, Context };
 use std::{
-    path::PathBuf, 
-    fs
+    path::PathBuf,
+    fs,
 };
 use log::{
     debug,
@@ -56,7 +56,10 @@ pub fn handle_event(event: &DebouncedEvent) -> Result<()> {
     Ok(())
 }
 
+#[allow(unused_variables)]
 fn build_bitburner_request(path_buf: &PathBuf, include_code: bool) -> Result<BitburnerRequest> {
+    #[cfg(test)]
+    let include_code = false;
     let filename: String = extract_file_name(path_buf)?;
     let code: Option<String> = match include_code {
         true => {
@@ -101,22 +104,54 @@ mod tests {
     use super::*;
 
     #[test]
+    fn assert_path_prefix_is_stripped() {
+        assert_eq!(
+            extract_file_name(&PathBuf::from("/one/two/three.txt")).unwrap(),
+            String::from("three.txt")
+        )
+    }
+    
+    #[test]
+    fn assert_valid_file() {
+        assert_eq!(is_valid_file(&PathBuf::from("test.js")), true);
+    }
+    
+    #[test]
+    fn assert_invalid_file() {
+        assert_eq!(is_valid_file(&PathBuf::from("test.kt")), false);
+    }
+
+    #[test]
     fn assert_write_event_is_successful() {
-        let _m = mock("PUT", "/")
+        let _m1 = mock("PUT", "/")
             .with_status(200)
             .with_body("written")
             .create();
-        let event = DebouncedEvent::Write(PathBuf::from(""));
+        let event = DebouncedEvent::Write(PathBuf::from("/one/two/test.js"));
+        assert!(handle_event(&event).is_ok());
+    }
+
+    #[test]
+    fn assert_rename_event_is_successful() {
+        let _m2 = mock("PUT", "/")
+            .with_status(200)
+            .with_body("written")
+            .create();
+        let _m3 = mock("DELETE", "/")
+            .with_status(200)
+            .with_body("deleted")
+            .create();
+        let event = DebouncedEvent::Rename(PathBuf::from("/one/two/source.js"), PathBuf::from("/one/two/destination.js"));
         assert!(handle_event(&event).is_ok());
     }
 
     #[test]
     fn assert_remove_event_is_successful() {
-        let _m = mock("DELETE", "/")
+        let _m4 = mock("DELETE", "/")
             .with_status(200)
             .with_body("deleted")
             .create();
-        let event = DebouncedEvent::Remove(PathBuf::from(""));
+        let event = DebouncedEvent::Remove(PathBuf::from("/one/two/test.js"));
         assert!(handle_event(&event).is_ok());
     }
 }

@@ -39,12 +39,12 @@ pub fn get_config() -> Result<Config> {
 }
 
 pub fn get_mock_config() -> Result<Config> {
-    let config = Config { bearer_token: String::from("token"), 
-        port: String::from("9990"),
-        url: String::from("url"),
-        valid_extensions: vec![String::from("")],
-        directory: String::from("") };
-    Ok(config)
+    Ok(
+        Config { 
+            directory: String::from("/one/two/") ,
+            ..Default::default()
+        }
+    )
 }
 
 #[derive(Debug)]
@@ -59,7 +59,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            bearer_token: String::from(""),
+            bearer_token: String::from("token"),
             port: String::from("9990"),
             url: String::from("http://localhost"),
             valid_extensions: vec!["script".to_string(), "js".to_string(), "ns".to_string(), "txt".to_string()],
