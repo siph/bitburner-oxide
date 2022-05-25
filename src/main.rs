@@ -25,7 +25,7 @@ fn main() -> Result<()> {
     info!("{:?}", &config);
     let (sender, receiver) = channel();
     let mut watcher = watcher(sender, Duration::from_secs(1))?;
-    watcher.watch(&config.directory, RecursiveMode::NonRecursive)?;
+    watcher.watch(&config.directory, RecursiveMode::Recursive)?;
     loop {
         match receiver.recv() {
             Ok(event) => handle_event(&config, &event)?,

@@ -24,7 +24,7 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
         Write(file) | Create(file) | Chmod(file) => {
             if is_valid_file(&file, &config) {
                 info!("file change detected for file: {:?}", &file);
-                let bitburner_request = build_bitburner_request(file, true)?;
+                let bitburner_request = build_bitburner_request(config, file, true)?;
                 match write_file_to_server(config, &bitburner_request) {
                     Ok(res) => debug!("Response: {:?}", res),
                     Err(e) => error!("Network error: {:?}", e)
@@ -34,7 +34,7 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
         Remove(file) => {
             if is_valid_file(&file, &config) {
                 info!("file deleted: {:?}", &file);
-                let bitburner_request = build_bitburner_request(file, false)?;
+                let bitburner_request = build_bitburner_request(config, file, false)?;
                 match delete_file_from_server(config, &bitburner_request) {
                     Ok(res) => debug!("Response: {:?}", res),
                     Err(e) => error!("Network error: {:?}", e)
@@ -46,12 +46,8 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
     Ok(())
 }
 
-fn build_bitburner_request(path_buf: &PathBuf, include_code: bool) -> Result<BitburnerRequest> {
-    let filename: String = path_buf.file_name()
-        .map(|fname| fname.to_str())
-        .unwrap()
-        .map(|s| String::from(s))
-        .context("Unable to parse filename")?;
+fn build_bitburner_request(config: &Config, path_buf: &PathBuf, include_code: bool) -> Result<BitburnerRequest> {
+    let filename: String = extract_file_name(config, path_buf)?;
     let code: Option<String> = match include_code {
         true => {
             Some(
@@ -71,6 +67,22 @@ fn build_bitburner_request(path_buf: &PathBuf, include_code: bool) -> Result<Bit
             code,
         }
     )
+}
+
+// fn extract_file_name(config: &Config, path_buf: &PathBuf) -> Result<String> {
+//     debug!("Building relative path from root: {:?} and file: {:?}", &config.directory, &path_buf);
+//     let relative_path = path_buf.as_path().strip_prefix(Path::new(&config.directory))?;
+//     debug!("Extracted relative path: ${:?}", &relative_path);
+//     let filename = relative_path.to_str().unwrap().to_string();
+//     debug!("Extracted filename: ${:?}", &filename);
+//     Ok(filename)
+// }
+
+fn extract_file_name(config: &Config, path_buf: &PathBuf) -> Result<String> {
+    path_buf.strip_prefix(&config.directory)
+        .map(|path| path.to_str())?
+        .map(|s| Ok(s.to_string()))
+        .context("Unable to extract file name")?
 }
 
 fn is_valid_file(path_buf: &PathBuf, config: &Config) -> bool {
