@@ -1,15 +1,13 @@
 use clap::Parser;
 
-/// Bitburner-oxide will automatically push modified or created script files to a running Bitburner game server.   
+/// Bitburner-oxide will watch for the creation, modification, or deletion of files within the chosen directory and its
+/// child directories. Upon detection of these events, Bitburner-oxide will update the Bitburner game files to reflect
+/// the changes made to the files and directories within the chosen directory.   
 /// 
-/// If ran from the same directory as the scripts the --directory flag is not needed.   
-/// Bitburner can manage all child files and directories of the chosen parent directory.
-/// 
-/// Authentication is done by passing in the bearer-token via --token.   
-/// Alternatively, the bearer-token can be placed in a file named 'token' in the chosen directory.   
-/// 
-/// Source for bitburner-oxide can be found at https://www.gitlab.com/xsiph/bitburner-oxide   
-
+/// Authentication is done by passing in the bearer-token via --token. 
+/// Alternatively, the bearer-token can be placed in a file named 'token' in the chosen directory.
+/// When ran from the same directory as the scripts you with to manage, the --directory flag is not needed.   
+/// Source for bitburner-oxide can be found at https://www.gitlab.com/xsiph/bitburner-oxide
 #[derive(Debug, Parser)]
 #[clap(author, version, about)]
 pub struct AppArgs {

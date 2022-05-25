@@ -1,18 +1,21 @@
 # Bitburner-oxide
 
 Bitburner-oxide is an editor-agnostic file manager for the game [Bitburner](https://github.com/danielyxie/bitburner).
-Bitburner-oxide allows you to edit scripts externally from the game.  
+Bitburner-oxide allows you to edit scripts externally from the game.
+The purpose of Bitburner-oxide is to fill the void for other editors (vim, emacs, sublime text) that 
+[bitburner-vscode](https://github.com/bitburner-official/bitburner-vscode) fills for vscode; although bitburner-oxide 
+also works with vscode.
 
-The purpose of Bitburner-oxide is to fill the void for other editors (vim, emacs, sublime text) that [bitburner-vscode](https://github.com/bitburner-official/bitburner-vscode) fills for vscode; although bitburner-oxide also works with vscode.  
+## How To Use
 
 ```text
-Bitburner-oxide will automatically push modified or created script files to a running Bitburner game server.
-
-If ran from the same directory as the scripts the --directory flag is not needed.
-Bitburner can manage all child files and directories of the chosen parent directory.
+Bitburner-oxide will watch for the creation, modification, or deletion of files within the chosen directory and its
+child directories. Upon detection of these events, Bitburner-oxide will update the Bitburner game files to reflect
+the changes made to the files and directories within the chosen directory.   
 
 Authentication is done by passing in the bearer-token via --token. 
 Alternatively, the bearer-token can be placed in a file named 'token' in the chosen directory.
+When ran from the same directory as the scripts you with to manage, the --directory flag is not needed.
 
 Source for bitburner-oxide can be found at https://www.gitlab.com/xsiph/bitburner-oxide
 
