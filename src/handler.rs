@@ -10,7 +10,7 @@ use log::{
 };
 use notify::DebouncedEvent::{Write, Create, Chmod, Remove, self};
 use crate::{
-    config::Config, 
+    CONFIG,
     bitburner::{
         BitburnerRequest, 
         write_file_to_server,
@@ -18,24 +18,24 @@ use crate::{
     },
 };
 
-pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
+pub fn handle_event(event: &DebouncedEvent) -> Result<()> {
     debug!("event: {:?}", event);
     match event {
         Write(file) | Create(file) | Chmod(file) => {
-            if is_valid_file(&file, &config) {
+            if is_valid_file(&file) {
                 info!("file change detected for file: {:?}", &file);
-                let bitburner_request = build_bitburner_request(config, file, true)?;
-                match write_file_to_server(config, &bitburner_request) {
+                let bitburner_request = build_bitburner_request(file, true)?;
+                match write_file_to_server(&bitburner_request) {
                     Ok(res) => debug!("Response: {:?}", res),
                     Err(e) => error!("Network error: {:?}", e)
                 }
             }
         },
         Remove(file) => {
-            if is_valid_file(&file, &config) {
+            if is_valid_file(&file) {
                 info!("file deleted: {:?}", &file);
-                let bitburner_request = build_bitburner_request(config, file, false)?;
-                match delete_file_from_server(config, &bitburner_request) {
+                let bitburner_request = build_bitburner_request(file, false)?;
+                match delete_file_from_server(&bitburner_request) {
                     Ok(res) => debug!("Response: {:?}", res),
                     Err(e) => error!("Network error: {:?}", e)
                 }
@@ -46,8 +46,8 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
     Ok(())
 }
 
-fn build_bitburner_request(config: &Config, path_buf: &PathBuf, include_code: bool) -> Result<BitburnerRequest> {
-    let filename: String = extract_file_name(config, path_buf)?;
+fn build_bitburner_request(path_buf: &PathBuf, include_code: bool) -> Result<BitburnerRequest> {
+    let filename: String = extract_file_name(path_buf)?;
     let code: Option<String> = match include_code {
         true => {
             Some(
@@ -69,17 +69,17 @@ fn build_bitburner_request(config: &Config, path_buf: &PathBuf, include_code: bo
     )
 }
 
-fn extract_file_name(config: &Config, path_buf: &PathBuf) -> Result<String> {
-    path_buf.strip_prefix(&config.directory)
+fn extract_file_name(path_buf: &PathBuf) -> Result<String> {
+    path_buf.strip_prefix(&CONFIG.directory)
         .map(|path| path.to_str())?
         .map(|s| Ok(s.to_string()))
         .context("Unable to extract file name")?
 }
 
-fn is_valid_file(path_buf: &PathBuf, config: &Config) -> bool {
+fn is_valid_file(path_buf: &PathBuf) -> bool {
     path_buf.extension()
         .map(|ex| ex.to_str().unwrap_or("").to_string())
-        .map(|s| config.valid_extensions.contains(&s))
+        .map(|s| CONFIG.valid_extensions.contains(&s))
         .unwrap_or(false)
 }
 
@@ -96,9 +96,8 @@ mod tests {
             .with_status(200)
             .with_body("written")
             .create();
-        let config = get_mock_config();
         let event = DebouncedEvent::Write(PathBuf::from(""));
-        assert!(handle_event(&config, &event).is_ok());
+        assert!(handle_event(&event).is_ok());
     }
 
     #[test]
@@ -107,16 +106,7 @@ mod tests {
             .with_status(200)
             .with_body("deleted")
             .create();
-        let config = get_mock_config();
         let event = DebouncedEvent::Remove(PathBuf::from(""));
-        assert!(handle_event(&config, &event).is_ok());
-    }
-
-    fn get_mock_config() -> Config {
-        Config { bearer_token: String::from("token"), 
-            port: String::from("9990"),
-            url: String::from("url"),
-            valid_extensions: vec![String::from("")],
-            directory: String::from("") }
+        assert!(handle_event(&event).is_ok());
     }
 }

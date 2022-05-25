@@ -4,15 +4,25 @@ extern crate clap;
 extern crate log;
 extern crate serde;
 
+pub mod bitburner;
+pub mod config;
+pub mod app_args;
+pub mod handler;
+
+use once_cell::sync::Lazy;
 use anyhow::Result;
 use env_logger::Env;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 use notify::{RecursiveMode, Watcher, watcher};
-use bitburner_oxide::{
-    handler::handle_event, 
-    config::get_config,
-};
+use handler::handle_event;
+#[allow(unused_imports)]
+use config::{ Config, get_config, get_mock_config };
+
+#[cfg(not(test))]
+pub static CONFIG: Lazy<Config> = Lazy::new(|| { get_config().expect("Unable to initialize configuration") });
+#[cfg(test)]
+pub static CONFIG: Lazy<Config> = Lazy::new(|| { get_mock_config().expect("Unable to initialize configuration") });
 
 fn main() -> Result<()> {
     let env = Env::default()
@@ -28,7 +38,7 @@ fn main() -> Result<()> {
     watcher.watch(&config.directory, RecursiveMode::Recursive)?;
     loop {
         match receiver.recv() {
-            Ok(event) => handle_event(&config, &event)?,
+            Ok(event) => handle_event(&event)?,
             Err(e) => error!("error: {:?}", e),
         }
     }
