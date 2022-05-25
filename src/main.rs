@@ -38,16 +38,16 @@ fn main() -> Result<()> {
         .write_style_or("LOG_STYLE", "always");
     env_logger::init_from_env(env);
     let config = get_config()?;
-    info!("bitburner-oxide version {:?}", crate_version!());
+    info!("bitburner-oxide version {:#?}", crate_version!());
     info!("bitburner-oxide initialized with config:");
-    info!("{:?}", &config);
+    info!("{:#?}", &config);
     let (sender, receiver) = channel();
     let mut watcher = watcher(sender, Duration::from_secs(1))?;
     watcher.watch(&config.directory, RecursiveMode::Recursive)?;
     loop {
         match receiver.recv() {
             Ok(event) => handle_event(&event)?,
-            Err(e) => error!("error: {:?}", e),
+            Err(e) => error!("error: {:#?}", e),
         }
     }
 }

@@ -25,29 +25,29 @@ use crate::{
 };
 
 pub fn handle_event(event: &DebouncedEvent) -> Result<()> {
-    debug!("event: {:?}", event);
+    debug!("event: {:#?}", event);
     match event {
         Write(file) | Create(file) | Chmod(file) => {
             if is_valid_file(&file) {
-                info!("file change detected for file: {:?}", &file);
+                info!("file change detected for file: {:#?}", &file);
                 let bitburner_request = build_bitburner_request(file, true)?;
                 match write_file_to_server(&bitburner_request) {
-                    Ok(res) => debug!("Response: {:?}", res),
-                    Err(e) => error!("Network error: {:?}", e)
+                    Ok(res) => debug!("Response: {:#?}", res),
+                    Err(e) => error!("Network error: {:#?}", e)
                 }
             }
         },
         Remove(file) => {
             if is_valid_file(&file) {
-                info!("file deleted: {:?}", &file);
+                info!("file deleted: {:#?}", &file);
                 let bitburner_request = build_bitburner_request(file, false)?;
                 match delete_file_from_server(&bitburner_request) {
-                    Ok(res) => debug!("Response: {:?}", res),
-                    Err(e) => error!("Network error: {:?}", e)
+                    Ok(res) => debug!("Response: {:#?}", res),
+                    Err(e) => error!("Network error: {:#?}", e)
                 }
             }
         },
-        unhandled_event => debug!("Unhandled event: {:?}", unhandled_event)
+        unhandled_event => debug!("Unhandled event: {:#?}", unhandled_event)
     }
     Ok(())
 }

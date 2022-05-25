@@ -28,9 +28,9 @@ fn send_request(bitburner_request: &BitburnerRequest, method: reqwest::Method) -
     let client = reqwest::blocking::Client::new();
     let token = CONFIG.bearer_token.clone();
     info!("Sending request with body and url:");
-    info!("Url: {:?}", &url);
-    debug!("Body: {:?}", &body);
-    info!("Token: {:?}", &token);
+    info!("Url: {:#?}", &url);
+    debug!("Body: {:#?}", &body);
+    info!("Token: {:#?}", &token);
     match method {
         reqwest::Method::PUT => client.put(url),
         reqwest::Method::DELETE => client.delete(url),
