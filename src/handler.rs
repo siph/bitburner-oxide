@@ -6,13 +6,13 @@ use std::{
 use log::{
     debug,
     info,
-    error,
 };
 use notify::DebouncedEvent::{
     Write, 
     Create, 
     Chmod, 
     Remove, 
+    Rename,
     self,
 };
 use crate::{
@@ -25,26 +25,30 @@ use crate::{
 };
 
 pub fn handle_event(event: &DebouncedEvent) -> Result<()> {
-    debug!("event: {:#?}", event);
     match event {
         Write(file) | Create(file) | Chmod(file) => {
             if is_valid_file(&file) {
                 info!("file change detected for file: {:#?}", &file);
                 let bitburner_request = build_bitburner_request(file, true)?;
-                match write_file_to_server(&bitburner_request) {
-                    Ok(res) => debug!("Response: {:#?}", res),
-                    Err(e) => error!("Network error: {:#?}", e)
-                }
+                write_file_to_server(&bitburner_request)?;
+            }
+        },
+        Rename(source, destination) => {
+            info!("file {:#?} has been moved to {:#?}", &source, &destination);
+            if is_valid_file(&destination) {
+                let bitburner_request = build_bitburner_request(destination, true)?;
+                write_file_to_server(&bitburner_request)?;
+            }
+            if is_valid_file(&source) {
+                let bitburner_request = build_bitburner_request(source, false)?;
+                delete_file_from_server(&bitburner_request)?;
             }
         },
         Remove(file) => {
             if is_valid_file(&file) {
                 info!("file deleted: {:#?}", &file);
                 let bitburner_request = build_bitburner_request(file, false)?;
-                match delete_file_from_server(&bitburner_request) {
-                    Ok(res) => debug!("Response: {:#?}", res),
-                    Err(e) => error!("Network error: {:#?}", e)
-                }
+                delete_file_from_server(&bitburner_request)?;
             }
         },
         unhandled_event => debug!("Unhandled event: {:#?}", unhandled_event)

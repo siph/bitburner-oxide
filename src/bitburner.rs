@@ -1,5 +1,7 @@
 #[cfg(test)]
 use mockito;
+
+use anyhow::Result;
 use serde::Serialize;
 use crate::CONFIG;
 use reqwest::{
@@ -9,14 +11,23 @@ use reqwest::{
 use log::{ 
     info, 
     debug,
+    error,
 };
 
-pub fn delete_file_from_server(bitburner_request: &BitburnerRequest) -> Result<Response, Error> {
-    send_request(bitburner_request, reqwest::Method::DELETE)
+pub fn delete_file_from_server(bitburner_request: &BitburnerRequest) -> Result<()> {
+    match send_request(bitburner_request, reqwest::Method::DELETE) {
+        Ok(res) => debug!("Response: {:#?}", res),
+        Err(e) => error!("Network error: {:#?}", e)
+    }
+    Ok(())
 }
 
-pub fn write_file_to_server(bitburner_request: &BitburnerRequest) -> Result<Response, Error> {
-    send_request(bitburner_request, reqwest::Method::PUT)
+pub fn write_file_to_server(bitburner_request: &BitburnerRequest) -> Result<()> {
+    match send_request(bitburner_request, reqwest::Method::PUT) {
+        Ok(res) => debug!("Response: {:#?}", res),
+        Err(e) => error!("Network error: {:#?}", e)
+    }
+    Ok(())
 }
 
 fn send_request(bitburner_request: &BitburnerRequest, method: reqwest::Method) -> Result<Response, Error> {
