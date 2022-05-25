@@ -18,7 +18,7 @@ pub fn get_config() -> Result<Config> {
         None => String::from(std::env::current_dir().unwrap().to_str().unwrap())
     };
     let token_path = String::from(Path::new(&directory).join("token").to_str().unwrap());
-    debug!("looking for token at: {:?}", &token_path);
+    debug!("looking for token at: {:#?}", &token_path);
     let token = match fs::read_to_string(token_path) {
         Ok(val) => {
             info!("Found token file");
