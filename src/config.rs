@@ -1,3 +1,4 @@
+use anyhow::Result;
 use std::{
     path::Path, 
     fs
@@ -10,7 +11,7 @@ use clap::Parser;
 use crate::app_args::AppArgs;
 
 
-pub fn get_config() -> Result<Config, Box<dyn std::error::Error>> {
+pub fn get_config() -> Result<Config> {
     let args = AppArgs::parse();
     let directory = match args.directory {
         Some(val) => String::from(val),
