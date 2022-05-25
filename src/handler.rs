@@ -47,7 +47,11 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
 }
 
 fn build_bitburner_request(path_buf: &PathBuf, include_code: bool) -> Result<BitburnerRequest> {
-    let filename = path_buf.to_str().context("Unable to extract filename")?;
+    let filename: String = path_buf.file_name()
+        .map(|fname| fname.to_str())
+        .unwrap()
+        .map(|s| String::from(s))
+        .context("Unable to parse filename")?;
     let code: Option<String> = match include_code {
         true => {
             Some(
@@ -63,7 +67,7 @@ fn build_bitburner_request(path_buf: &PathBuf, include_code: bool) -> Result<Bit
     };
     Ok(
         BitburnerRequest {
-            filename: filename.to_owned(),
+            filename,
             code,
         }
     )
