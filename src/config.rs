@@ -38,6 +38,15 @@ pub fn get_config() -> Result<Config> {
     })
 }
 
+pub fn get_mock_config() -> Result<Config> {
+    let config = Config { bearer_token: String::from("token"), 
+        port: String::from("9990"),
+        url: String::from("url"),
+        valid_extensions: vec![String::from("")],
+        directory: String::from("") };
+    Ok(config)
+}
+
 #[derive(Debug)]
 pub struct Config {
     pub bearer_token: String,
