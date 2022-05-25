@@ -1,3 +1,4 @@
+use anyhow::{ Result, Context };
 use std::{
     path::PathBuf, 
     fs
@@ -17,13 +18,13 @@ use crate::{
     },
 };
 
-pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<dyn std::error::Error>> {
+pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
     debug!("event: {:?}", event);
     match event {
         Write(file) | Create(file) | Chmod(file) => {
             if is_valid_file(&file, &config) {
                 let code = base64::encode(fs::read_to_string(file.as_path()).unwrap());
-                let filename = String::from(file.file_name().unwrap().to_str().unwrap());
+                let filename = String::from(extract_file_name(file)?);
                 info!("file change detected for file: {:?}", &filename);
                 let bitburner_request = BitburnerRequest {
                     filename,
@@ -37,10 +38,10 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<d
         },
         Remove(file) => {
             if is_valid_file(&file, &config) {
-                let filename = String::from(file.file_name().unwrap().to_str().unwrap());
-                info!("file deleted: {:?}",file.file_name().unwrap());
+                let filename = String::from(extract_file_name(file)?);
+                info!("file deleted: {:?}", &filename);
                 let bitburner_request = BitburnerRequest {
-                    filename: filename,
+                    filename,
                     code: None
                 };
                 match delete_file_from_server(config, &bitburner_request) {
@@ -52,6 +53,10 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<(), Box<d
         unhandled_event => debug!("Unhandled event: {:?}", unhandled_event)
     }
     Ok(())
+}
+
+fn extract_file_name(path_buf: &PathBuf) -> Result<&str> {
+    path_buf.to_str().context("Unable to extract filename")
 }
 
 fn is_valid_file(path_buf: &PathBuf, config: &Config) -> bool {

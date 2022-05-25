@@ -6,7 +6,7 @@ use reqwest::{
     blocking::Response,
     Error,
 };
-use log::info;
+use log::{ info, debug };
 
 pub fn delete_file_from_server(config: &Config, bitburner_request: &BitburnerRequest) -> Result<Response, Error> {
     send_request(config, bitburner_request, reqwest::Method::DELETE)
@@ -26,7 +26,7 @@ fn send_request(config: &Config, bitburner_request: &BitburnerRequest, method: r
     let token = config.bearer_token.clone();
     info!("Sending request with body and url:");
     info!("Url: {:?}", &url);
-    info!("Body: {:?}", &body);
+    debug!("Body: {:?}", &body);
     info!("Token: {:?}", &token);
     match method {
         reqwest::Method::PUT => client.put(url),
