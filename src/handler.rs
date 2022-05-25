@@ -69,15 +69,6 @@ fn build_bitburner_request(config: &Config, path_buf: &PathBuf, include_code: bo
     )
 }
 
-// fn extract_file_name(config: &Config, path_buf: &PathBuf) -> Result<String> {
-//     debug!("Building relative path from root: {:?} and file: {:?}", &config.directory, &path_buf);
-//     let relative_path = path_buf.as_path().strip_prefix(Path::new(&config.directory))?;
-//     debug!("Extracted relative path: ${:?}", &relative_path);
-//     let filename = relative_path.to_str().unwrap().to_string();
-//     debug!("Extracted filename: ${:?}", &filename);
-//     Ok(filename)
-// }
-
 fn extract_file_name(config: &Config, path_buf: &PathBuf) -> Result<String> {
     path_buf.strip_prefix(&config.directory)
         .map(|path| path.to_str())?
