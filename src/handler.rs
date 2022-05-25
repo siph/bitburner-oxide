@@ -23,13 +23,8 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
     match event {
         Write(file) | Create(file) | Chmod(file) => {
             if is_valid_file(&file, &config) {
-                let code = base64::encode(fs::read_to_string(file.as_path()).unwrap());
-                let filename = String::from(extract_file_name(file)?);
-                info!("file change detected for file: {:?}", &filename);
-                let bitburner_request = BitburnerRequest {
-                    filename,
-                    code: Some(code)
-                };
+                info!("file change detected for file: {:?}", &file);
+                let bitburner_request = build_bitburner_request(file, true)?;
                 match write_file_to_server(config, &bitburner_request) {
                     Ok(res) => debug!("Response: {:?}", res),
                     Err(e) => error!("Network error: {:?}", e)
@@ -38,12 +33,8 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
         },
         Remove(file) => {
             if is_valid_file(&file, &config) {
-                let filename = String::from(extract_file_name(file)?);
-                info!("file deleted: {:?}", &filename);
-                let bitburner_request = BitburnerRequest {
-                    filename,
-                    code: None
-                };
+                info!("file deleted: {:?}", &file);
+                let bitburner_request = build_bitburner_request(file, false)?;
                 match delete_file_from_server(config, &bitburner_request) {
                     Ok(res) => debug!("Response: {:?}", res),
                     Err(e) => error!("Network error: {:?}", e)
@@ -55,12 +46,34 @@ pub fn handle_event(config: &Config, event: &DebouncedEvent) -> Result<()> {
     Ok(())
 }
 
-fn extract_file_name(path_buf: &PathBuf) -> Result<&str> {
-    path_buf.to_str().context("Unable to extract filename")
+fn build_bitburner_request(path_buf: &PathBuf, include_code: bool) -> Result<BitburnerRequest> {
+    let filename = path_buf.to_str().context("Unable to extract filename")?;
+    let code: Option<String> = match include_code {
+        true => {
+            Some(
+                base64::encode(
+                    fs::read_to_string(
+                        path_buf.as_path()
+                    )
+                    .expect("Unable to extract file contents")
+                )
+            )
+        },
+        false => None,
+    };
+    Ok(
+        BitburnerRequest {
+            filename: filename.to_owned(),
+            code,
+        }
+    )
 }
 
 fn is_valid_file(path_buf: &PathBuf, config: &Config) -> bool {
-    path_buf.extension().is_some() && config.valid_extensions.contains(&path_buf.extension().unwrap().to_str().unwrap().to_owned())
+    path_buf.extension()
+        .map(|ex| ex.to_str().unwrap_or("").to_string())
+        .map(|s| config.valid_extensions.contains(&s))
+        .unwrap_or(false)
 }
 
 #[cfg(test)]
