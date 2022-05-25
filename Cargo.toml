@@ -1,6 +1,6 @@
 [package]
 name = "bitburner-oxide"
-version = "0.1.13"
+version = "0.1.14"
 authors = ["Chris Dawkins"]
 edition = "2021"
 
