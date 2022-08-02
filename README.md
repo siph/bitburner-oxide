@@ -3,9 +3,9 @@ Bitburner-oxide is an editor-agnostic file manager for the game [Bitburner](http
 Bitburner-oxide allows you to synchronize the scripts edited on your computer with the scripts inside the game.
 Bitburner-oxide will watch for the creation, modification, or deletion of files within the chosen directory and its
 child directories. Upon detection of these events, Bitburner-oxide will update the Bitburner game files to reflect
-the changes made to the files and directories within the chosen directory.   
-The purpose of Bitburner-oxide is to fill the void for other editors (vim, emacs, sublime text, etc.) that 
-[bitburner-vscode](https://github.com/bitburner-official/bitburner-vscode) fills for vscode, although bitburner-oxide 
+the changes made to the files and directories within the chosen directory.
+The purpose of Bitburner-oxide is to fill the void for other editors (vim, emacs, sublime text, etc.) that
+[bitburner-vscode](https://github.com/bitburner-official/bitburner-vscode) fills for vscode, although bitburner-oxide
 also works with vscode.
 
 ## How To Use
@@ -26,7 +26,7 @@ bitburner-oxide
 ```
 
 ## What Bitburner-oxide Synchronizes
-Bitburner-oxide takes files from a chosen directory and one-way synchronizes those files with the files inside of the 
+Bitburner-oxide takes files from a chosen directory and one-way synchronizes those files with the files inside of the
 game Bitburner. Bitburner-oxide does not work in the opposite direction of game files -> chosen directory files.
 Bitburner-oxide will only synchronize files that end with a relevant extension: [.js, .ns, .script, etc].
 
@@ -50,8 +50,18 @@ $ git clone 'https://gitlab.com/xsiph/bitburner-oxide.git'
 $ cargo build --release && cp target/release/bitburner-oxide ~/.local/bin/
 ```
 
+### Nix with Flakes
+```bash
+# From repository
+$ nix run -- -t '<bearer-token>'
+```
+```bash
+# From anywhere
+$ nix run gitlab:xsiph/bitburner-oxide -- -t '<bearer-token>'
+```
+
 ### Mac / Windows
-I have no idea if this works on Mac or Windows. There is nothing platform specific in the code, so I assume it should?  
+I have no idea if this works on Mac or Windows. There is nothing platform specific in the code, so I assume it should?
 If not, try docker.
 
 ## Docker
