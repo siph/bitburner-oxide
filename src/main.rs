@@ -13,18 +13,19 @@ use once_cell::sync::Lazy;
 use anyhow::Result;
 use env_logger::Env;
 use std::sync::mpsc::channel;
-use std::time::Duration;
+use std::path::Path;
 use notify::{
-    RecursiveMode, 
-    Watcher, 
-    watcher
+    RecursiveMode,
+    Watcher,
+    RecommendedWatcher,
+    Config as notify_config
 };
 use handler::handle_event;
 #[allow(unused_imports)]
-use config::{ 
-    Config, 
-    get_config, 
-    get_mock_config 
+use config::{
+    Config,
+    get_config,
+    get_mock_config
 };
 
 #[cfg(not(test))]
@@ -42,13 +43,14 @@ fn main() -> Result<()> {
     info!("bitburner-oxide initialized with config:");
     info!("{:#?}", &config);
     let (sender, receiver) = channel();
-    let mut watcher = watcher(sender, Duration::from_secs(1))?;
-    watcher.watch(&config.directory, RecursiveMode::Recursive)?;
-    loop {
-        match receiver.recv() {
+    let mut watcher = RecommendedWatcher::new(sender, notify_config::default())?;
+    watcher.watch(&Path::new(&config.directory), RecursiveMode::Recursive)?;
+    for result in receiver {
+        match result {
             Ok(event) => handle_event(&event)?,
             Err(e) => error!("error: {:#?}", e),
         }
     }
+    Ok(())
 }
 

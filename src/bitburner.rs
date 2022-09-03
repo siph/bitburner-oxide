@@ -8,8 +8,8 @@ use reqwest::{
     blocking::Response,
     Error,
 };
-use log::{ 
-    info, 
+use log::{
+    info,
     debug,
     error,
 };

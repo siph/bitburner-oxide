@@ -7,49 +7,39 @@ use log::{
     debug,
     info,
 };
-use notify::DebouncedEvent::{
-    Write, 
-    Create, 
-    Chmod, 
-    Remove, 
-    Rename,
-    self,
+use notify::event::{
+    Event,
+    EventKind,
 };
 use crate::{
     CONFIG,
     bitburner::{
-        BitburnerRequest, 
+        BitburnerRequest,
         write_file_to_server,
         delete_file_from_server,
     },
 };
 
-pub fn handle_event(event: &DebouncedEvent) -> Result<()> {
-    match event {
-        Write(file) | Create(file) | Chmod(file) => {
-            if is_valid_file(&file) {
-                info!("file change detected for file: {:#?}", &file);
-                let bitburner_request = build_bitburner_request(file, true)?;
-                write_file_to_server(&bitburner_request)?;
-            }
+pub fn handle_event(event: &Event) -> Result<()> {
+    if !event.clone().paths.into_iter().all(|it| is_valid_file(&it)) {
+        debug!("ignoring event: {:#?}", &event);
+        return Ok(());
+    }
+    let source = event.paths.get(0).expect(&format!("unable to get source file for event: {:#?}", event));
+    match &event.kind {
+        EventKind::Create(_) => {
+            info!("file created: {:#?}", &event);
+            write_file_to_server(&build_bitburner_request(&source, true)?)?;
         },
-        Rename(source, destination) => {
+        EventKind::Modify(_) => {
+            let destination = event.paths.get(1).expect(&format!("unable to get destination file for event: {:#?}", event));
             info!("file {:#?} has been moved to {:#?}", &source, &destination);
-            if is_valid_file(&destination) {
-                let bitburner_request = build_bitburner_request(destination, true)?;
-                write_file_to_server(&bitburner_request)?;
-            }
-            if is_valid_file(&source) {
-                let bitburner_request = build_bitburner_request(source, false)?;
-                delete_file_from_server(&bitburner_request)?;
-            }
+            write_file_to_server(&build_bitburner_request(destination, true)?)?;
+            delete_file_from_server(&build_bitburner_request(source, false)?)?;
         },
-        Remove(file) => {
-            if is_valid_file(&file) {
-                info!("file deleted: {:#?}", &file);
-                let bitburner_request = build_bitburner_request(file, false)?;
-                delete_file_from_server(&bitburner_request)?;
-            }
+        EventKind::Remove(_) => {
+            info!("file deleted: {:#?}", &event);
+            delete_file_from_server(&build_bitburner_request(&source, false)?)?;
         },
         unhandled_event => debug!("Unhandled event: {:#?}", unhandled_event)
     }
@@ -100,7 +90,7 @@ fn is_valid_file(path_buf: &PathBuf) -> bool {
 mod tests {
     use std::path::PathBuf;
     use mockito::mock;
-    use notify::DebouncedEvent;
+    use notify::event::{CreateKind, ModifyKind, RemoveKind};
     use super::*;
 
     #[test]
@@ -110,12 +100,12 @@ mod tests {
             String::from("three.txt")
         )
     }
-    
+
     #[test]
     fn assert_valid_file() {
         assert_eq!(is_valid_file(&PathBuf::from("test.js")), true);
     }
-    
+
     #[test]
     fn assert_invalid_file() {
         assert_eq!(is_valid_file(&PathBuf::from("test.kt")), false);
@@ -127,7 +117,9 @@ mod tests {
             .with_status(200)
             .with_body("written")
             .create();
-        let event = DebouncedEvent::Write(PathBuf::from("/one/two/test.js"));
+        let kind = EventKind::Create(CreateKind::Any);
+        let event = Event::new(kind)
+            .add_path(PathBuf::from("/one/two/test.js"));
         assert!(handle_event(&event).is_ok());
     }
 
@@ -141,7 +133,10 @@ mod tests {
             .with_status(200)
             .with_body("deleted")
             .create();
-        let event = DebouncedEvent::Rename(PathBuf::from("/one/two/source.js"), PathBuf::from("/one/two/destination.js"));
+        let kind = EventKind::Modify(ModifyKind::Any);
+        let event = Event::new(kind)
+            .add_path(PathBuf::from("/one/two/source.js"))
+            .add_path(PathBuf::from("/one/two/destination.js"));
         assert!(handle_event(&event).is_ok());
     }
 
@@ -151,7 +146,9 @@ mod tests {
             .with_status(200)
             .with_body("deleted")
             .create();
-        let event = DebouncedEvent::Remove(PathBuf::from("/one/two/test.js"));
+        let kind = EventKind::Remove(RemoveKind::Any);
+        let event = Event::new(kind)
+            .add_path(PathBuf::from("/one/two/test.js"));
         assert!(handle_event(&event).is_ok());
     }
 }

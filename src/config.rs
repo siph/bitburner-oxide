@@ -1,10 +1,10 @@
 use anyhow::Result;
 use std::{
-    path::Path, 
+    path::Path,
     fs,
 };
 use log::{
-    info, 
+    info,
     debug,
 };
 use clap::Parser;
@@ -40,7 +40,7 @@ pub fn get_config() -> Result<Config> {
 
 pub fn get_mock_config() -> Result<Config> {
     Ok(
-        Config { 
+        Config {
             directory: String::from("/one/two/") ,
             ..Default::default()
         }

@@ -1,7 +1,7 @@
 [package]
 name = "bitburner-oxide"
-version = "0.1.18"
-authors = ["Chris Dawkins"]
+version = "0.1.2"
+authors = ["Chris Dawkins <dawkins.chris.dev@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,7 +11,7 @@ clap = { version = "3.2.14", features = ["cargo", "derive"]}
 reqwest = { version = "0.11.11", features = ["blocking"]}
 serde = { version = "1.0.140", features = ["derive"] }
 serde_json = "1.0.82"
-notify = "4.0.17"
+notify = "5.0.0"
 base64 = "0.13.0"
 log = "0.4.17"
 env_logger = "0.9.0"
