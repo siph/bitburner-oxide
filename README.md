@@ -43,7 +43,7 @@ Bitburner-oxide will only synchronize files that end with a relevant extension: 
 ## Build Instructions
 ### Linux
 ```bash
-$ git clone 'https://gitlab.com/xsiph/bitburner-oxide.git'
+$ git clone 'https://github.com/siph/bitburner-oxide.git'
 ```
 ```bash
 # To add to PATH and call directly from the command line.
@@ -57,7 +57,7 @@ $ nix run -- -t '<bearer-token>'
 ```
 ```bash
 # From anywhere
-$ nix run gitlab:xsiph/bitburner-oxide -- -t '<bearer-token>'
+$ nix run github:siph/bitburner-oxide -- -t '<bearer-token>'
 ```
 
 ### Mac / Windows
@@ -67,10 +67,10 @@ If not, try docker.
 ## Docker
 ### Build
 ```bash
-$ git clone 'https://gitlab.com/xsiph/bitburner-oxide.git'
+$ git clone 'https://github.com/siph/bitburner-oxide.git'
 ```
 ```bash
-$ docker build -t xsiph/bitburner-oxide .
+$ docker build -t siph/bitburner-oxide .
 ```
 
 ### Run

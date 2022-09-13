@@ -7,7 +7,7 @@ use clap::Parser;
 /// Authentication is done by passing in the bearer-token via --token. 
 /// Alternatively, the bearer-token can be placed in a file named 'token' in the chosen directory.
 /// When ran from the same directory as the scripts you wish to manage, the --directory flag is not needed.   
-/// Source for bitburner-oxide can be found at https://www.gitlab.com/xsiph/bitburner-oxide
+/// Source for bitburner-oxide can be found at https://www.github.com/siph/bitburner-oxide
 #[derive(Debug, Parser)]
 #[clap(author, version, about)]
 pub struct AppArgs {
