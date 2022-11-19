@@ -1,56 +1,62 @@
 #[macro_use]
-extern crate clap;
-#[macro_use]
 extern crate log;
 extern crate serde;
 
 pub mod bitburner;
+pub mod websocket;
 pub mod config;
-pub mod app_args;
-pub mod handler;
 
 use once_cell::sync::Lazy;
 use anyhow::Result;
 use env_logger::Env;
-use std::sync::mpsc::channel;
-use std::path::Path;
+use std::{sync::mpsc::channel, path::PathBuf};
 use notify::{
     RecursiveMode,
     Watcher,
     RecommendedWatcher,
-    Config as notify_config
 };
-use handler::handle_event;
-#[allow(unused_imports)]
-use config::{
-    Config,
-    get_config,
-    get_mock_config
-};
+use config::Config;
+
+use crate::{bitburner::operation::BitburnerOperation, websocket::client::send_message};
 
 #[cfg(not(test))]
-pub static CONFIG: Lazy<Config> = Lazy::new(|| { get_config().expect("Unable to initialize configuration") });
+pub static CONFIG: Lazy<Config> = Lazy::new(|| { confy::load("filesync", None).unwrap() });
 #[cfg(test)]
-pub static CONFIG: Lazy<Config> = Lazy::new(|| { get_mock_config().expect("Unable to initialize configuration") });
+pub static CONFIG: Lazy<Config> = Lazy::new(||{ Config { dry: true, ..Default::default()}});
 
 fn main() -> Result<()> {
     let env = Env::default()
-        .filter_or("LOG_LEVEL", "info")
-        .write_style_or("LOG_STYLE", "always");
+        .write_style("always")
+        .filter(
+            match &CONFIG.quiet {
+                true => "info",
+                false => "error",
+            }
+        );
     env_logger::init_from_env(env);
-    let config = get_config()?;
-    info!("bitburner-oxide version {:#?}", crate_version!());
     info!("bitburner-oxide initialized with config:");
-    info!("{:#?}", &config);
+    info!("{:#?}", &CONFIG);
     let (sender, receiver) = channel();
-    let mut watcher = RecommendedWatcher::new(sender, notify_config::default())?;
-    watcher.watch(&Path::new(&config.directory), RecursiveMode::Recursive)?;
+    let mut watcher = RecommendedWatcher::new(sender, notify::Config::default())?;
+    watcher.watch(&CONFIG.scripts_folder, RecursiveMode::Recursive)?;
     for result in receiver {
         match result {
-            Ok(event) => handle_event(&event)?,
+            Ok(event) => {
+                if event.clone().paths.into_iter().all(|it| is_valid_file(&it)) {
+                    send_message(BitburnerOperation::from(event))?;
+                }
+                return Ok(())
+            },
             Err(e) => error!("error: {:#?}", e),
         }
     }
     Ok(())
+}
+
+fn is_valid_file(path_buf: &PathBuf) -> bool {
+    path_buf.extension()
+        .map(|ex| ex.to_str().unwrap_or("").to_string())
+        .map(|s| CONFIG.allowed_filetypes.contains(&s))
+        .unwrap_or(false)
 }
 
