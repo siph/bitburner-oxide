@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, str::FromStr};
-use serde::{Serialize, Deserialize};
 
 /// Bitburner-oxide will watch for the creation, modification, or deletion of files within the chosen directory and its
 /// child directories. Upon detection of these events, Bitburner-oxide will update the Bitburner game files to reflect
@@ -28,7 +28,12 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            allowed_filetypes: vec!["script".to_string(), "js".to_string(), "ns".to_string(), "txt".to_string()],
+            allowed_filetypes: vec![
+                "script".to_string(),
+                "js".to_string(),
+                "ns".to_string(),
+                "txt".to_string(),
+            ],
             allow_deleting_files: false,
             port: 12525,
             scripts_folder: PathBuf::from_str(".").unwrap(),

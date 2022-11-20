@@ -1,8 +1,8 @@
 use crate::CONFIG;
 use anyhow::Context;
-use std::{path::PathBuf, fs};
 use notify::event::EventKind;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::{fs, path::PathBuf};
 
 /// Subject of [BitburnerOperation]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -16,7 +16,10 @@ pub struct File {
 /// Action of [BitburnerOperation]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Action {
-    REMOVE, CREATE, MOVE, IGNORE
+    REMOVE,
+    CREATE,
+    MOVE,
+    IGNORE,
 }
 
 /// Collection of [File] and the [Action] to be preformed. Two separate files are needed for a move or rename operation.
@@ -24,7 +27,7 @@ pub enum Action {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BitburnerOperation {
     pub action: Action,
-    pub files: Vec<File>
+    pub files: Vec<File>,
 }
 
 impl From<notify::event::Event> for BitburnerOperation {
@@ -35,17 +38,18 @@ impl From<notify::event::Event> for BitburnerOperation {
                 info!("file created: {:#?}", &event);
                 BitburnerOperation {
                     action: Action::CREATE,
-                    files: vec![
-                        File {
-                            filename: PathBuf::from(extract_file_name(&target_file)),
-                            code: Some(extract_file_contents(&target_file)),
-                        }
-                    ],
+                    files: vec![File {
+                        filename: PathBuf::from(extract_file_name(&target_file)),
+                        code: Some(extract_file_contents(&target_file)),
+                    }],
                 }
-            },
+            }
             EventKind::Modify(_) => {
                 let destination_file = &event.paths.get(1).unwrap();
-                info!("file moved: {:#?} -> {:#?}", &target_file, &destination_file);
+                info!(
+                    "file moved: {:#?} -> {:#?}",
+                    &target_file, &destination_file
+                );
                 BitburnerOperation {
                     action: Action::MOVE,
                     files: vec![
@@ -56,22 +60,20 @@ impl From<notify::event::Event> for BitburnerOperation {
                         File {
                             filename: PathBuf::from(extract_file_name(&destination_file)),
                             code: Some(extract_file_contents(&destination_file)),
-                        }
-                    ]
+                        },
+                    ],
                 }
-            },
+            }
             EventKind::Remove(_) => {
                 info!("file deleted: {:#?}", &event);
                 BitburnerOperation {
                     action: Action::REMOVE,
-                    files: vec![
-                        File {
-                            filename: PathBuf::from(extract_file_name(&target_file)),
-                            code: None,
-                        }
-                    ],
+                    files: vec![File {
+                        filename: PathBuf::from(extract_file_name(&target_file)),
+                        code: None,
+                    }],
                 }
-            },
+            }
             unhandled_event => {
                 warn!("Unhandled event: {:#?}", unhandled_event);
                 BitburnerOperation {
@@ -88,33 +90,34 @@ fn extract_file_contents(path_buf: &PathBuf) -> String {
 }
 
 fn extract_file_name(path_buf: &PathBuf) -> String {
-    path_buf.strip_prefix(&CONFIG.scripts_folder)
-        .map(|path| path.to_str()).unwrap()
+    path_buf
+        .strip_prefix(&CONFIG.scripts_folder)
+        .map(|path| path.to_str())
+        .unwrap()
         .map(|s| s.to_string())
-        .context("Unable to extract file name").unwrap()
+        .context("Unable to extract file name")
+        .unwrap()
 }
 
 #[cfg(test)]
 mod tests {
-    use notify::{event::CreateKind, Event};
     use super::*;
+    use notify::{event::CreateKind, Event};
 
     #[test]
     fn create_event_transforms_into_operation() {
         let target_file = PathBuf::from("./Cargo.toml");
         let create_event = Event {
             kind: EventKind::Create(CreateKind::Any),
-            paths: vec![ target_file.clone() ],
+            paths: vec![target_file.clone()],
             ..Default::default()
         };
         let operation = BitburnerOperation {
             action: Action::CREATE,
-            files: vec![
-                File {
-                    filename: PathBuf::from(extract_file_name(&target_file)),
-                    code: Some(String::from(extract_file_contents(&target_file))),
-                }
-            ]
+            files: vec![File {
+                filename: PathBuf::from(extract_file_name(&target_file)),
+                code: Some(String::from(extract_file_contents(&target_file))),
+            }],
         };
         assert_eq!(BitburnerOperation::from(create_event), operation);
     }
@@ -124,17 +127,15 @@ mod tests {
         let target_file = PathBuf::from("./Cargo.toml");
         let remove_event = Event {
             kind: EventKind::Remove(notify::event::RemoveKind::Any),
-            paths: vec![ target_file.clone() ],
+            paths: vec![target_file.clone()],
             ..Default::default()
         };
         let operation = BitburnerOperation {
             action: Action::REMOVE,
-            files: vec![
-                File {
-                    filename: PathBuf::from(extract_file_name(&target_file)),
-                    code: None,
-                }
-            ]
+            files: vec![File {
+                filename: PathBuf::from(extract_file_name(&target_file)),
+                code: None,
+            }],
         };
         assert_eq!(BitburnerOperation::from(remove_event), operation);
     }
@@ -145,7 +146,7 @@ mod tests {
         let destination_file = PathBuf::from("./Cargo.lock");
         let move_event = Event {
             kind: EventKind::Modify(notify::event::ModifyKind::Any),
-            paths: vec![ target_file.clone(), destination_file.clone() ],
+            paths: vec![target_file.clone(), destination_file.clone()],
             ..Default::default()
         };
         let operation = BitburnerOperation {
@@ -158,8 +159,8 @@ mod tests {
                 File {
                     filename: PathBuf::from(extract_file_name(&destination_file)),
                     code: Some(String::from(extract_file_contents(&destination_file))),
-                }
-            ]
+                },
+            ],
         };
         assert_eq!(BitburnerOperation::from(move_event), operation);
     }
@@ -169,13 +170,12 @@ mod tests {
         let target_file = PathBuf::from("./Cargo.toml");
         let unknown_event = Event {
             kind: EventKind::Other,
-            paths: vec![ target_file.clone() ],
+            paths: vec![target_file.clone()],
             ..Default::default()
         };
         let operation = BitburnerOperation {
             action: Action::IGNORE,
-            files: vec![
-            ]
+            files: vec![],
         };
         assert_eq!(BitburnerOperation::from(unknown_event), operation);
     }

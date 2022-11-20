@@ -3,36 +3,33 @@ extern crate log;
 extern crate serde;
 
 pub mod bitburner;
-pub mod websocket;
 pub mod config;
+pub mod websocket;
 
-use once_cell::sync::Lazy;
 use anyhow::Result;
-use env_logger::Env;
-use std::{sync::mpsc::channel, path::PathBuf};
-use notify::{
-    RecursiveMode,
-    Watcher,
-    RecommendedWatcher,
-};
 use config::Config;
+use env_logger::Env;
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use once_cell::sync::Lazy;
+use std::{path::PathBuf, sync::mpsc::channel};
 
 use crate::{bitburner::operation::BitburnerOperation, websocket::client::send_message};
 
 #[cfg(not(test))]
-pub static CONFIG: Lazy<Config> = Lazy::new(|| { confy::load("filesync", None).unwrap() });
+pub static CONFIG: Lazy<Config> = Lazy::new(|| confy::load("filesync", None).unwrap());
 #[cfg(test)]
-pub static CONFIG: Lazy<Config> = Lazy::new(||{ Config { dry: true, ..Default::default()}});
+pub static CONFIG: Lazy<Config> = Lazy::new(|| Config {
+    dry: true,
+    ..Default::default()
+});
 
 fn main() -> Result<()> {
     let env = Env::default()
         .write_style("always")
-        .filter(
-            match &CONFIG.quiet {
-                true => "info",
-                false => "error",
-            }
-        );
+        .filter(match &CONFIG.quiet {
+            true => "info",
+            false => "error",
+        });
     env_logger::init_from_env(env);
     info!("bitburner-oxide initialized with config:");
     info!("{:#?}", &CONFIG);
@@ -45,8 +42,8 @@ fn main() -> Result<()> {
                 if event.clone().paths.into_iter().all(|it| is_valid_file(&it)) {
                     send_message(BitburnerOperation::from(event))?;
                 }
-                return Ok(())
-            },
+                return Ok(());
+            }
             Err(e) => error!("error: {:#?}", e),
         }
     }
@@ -54,9 +51,9 @@ fn main() -> Result<()> {
 }
 
 fn is_valid_file(path_buf: &PathBuf) -> bool {
-    path_buf.extension()
+    path_buf
+        .extension()
         .map(|ex| ex.to_str().unwrap_or("").to_string())
         .map(|s| CONFIG.allowed_filetypes.contains(&s))
         .unwrap_or(false)
 }
-
