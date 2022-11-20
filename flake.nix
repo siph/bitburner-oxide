@@ -33,10 +33,12 @@
         devShell = with pkgs;
           mkShell {
             buildInputs = [
-              rustc
               cargo
-              pkg-config
+              clippy
               openssl
+              pkg-config
+              rustc
+              rustfmt
             ];
           };
       });
