@@ -9,7 +9,7 @@ use std::{fs, path::PathBuf};
 pub struct File {
     /// File path with the scripts folder treated as root
     pub filename: PathBuf,
-    /// File contents. Must be encoded into base64.
+    /// File contents encoded into base64.
     pub code: Option<String>,
 }
 
@@ -39,8 +39,8 @@ impl From<notify::event::Event> for BitburnerOperation {
                 BitburnerOperation {
                     action: Action::CREATE,
                     files: vec![File {
-                        filename: PathBuf::from(extract_file_name(&target_file)),
-                        code: Some(extract_file_contents(&target_file)),
+                        filename: PathBuf::from(extract_file_name(target_file)),
+                        code: Some(extract_file_contents(target_file)),
                     }],
                 }
             }
@@ -54,12 +54,12 @@ impl From<notify::event::Event> for BitburnerOperation {
                     action: Action::MOVE,
                     files: vec![
                         File {
-                            filename: PathBuf::from(extract_file_name(&target_file)),
+                            filename: PathBuf::from(extract_file_name(target_file)),
                             code: None,
                         },
                         File {
-                            filename: PathBuf::from(extract_file_name(&destination_file)),
-                            code: Some(extract_file_contents(&destination_file)),
+                            filename: PathBuf::from(extract_file_name(destination_file)),
+                            code: Some(extract_file_contents(destination_file)),
                         },
                     ],
                 }
@@ -69,7 +69,7 @@ impl From<notify::event::Event> for BitburnerOperation {
                 BitburnerOperation {
                     action: Action::REMOVE,
                     files: vec![File {
-                        filename: PathBuf::from(extract_file_name(&target_file)),
+                        filename: PathBuf::from(extract_file_name(target_file)),
                         code: None,
                     }],
                 }
@@ -85,11 +85,11 @@ impl From<notify::event::Event> for BitburnerOperation {
     }
 }
 
-fn extract_file_contents(path_buf: &PathBuf) -> String {
+pub fn extract_file_contents(path_buf: &PathBuf) -> String {
     base64::encode(fs::read_to_string(path_buf.as_path()).expect("Unable to extract file contents"))
 }
 
-fn extract_file_name(path_buf: &PathBuf) -> String {
+pub fn extract_file_name(path_buf: &PathBuf) -> String {
     path_buf
         .strip_prefix(&CONFIG.scripts_folder)
         .map(|path| path.to_str())

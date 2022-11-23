@@ -4,16 +4,17 @@ extern crate serde;
 
 pub mod bitburner;
 pub mod config;
-pub mod websocket;
 
 use anyhow::Result;
 use config::Config;
 use env_logger::Env;
+use jsonrpc_ws_server::{jsonrpc_core::IoHandler, ServerBuilder};
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use once_cell::sync::Lazy;
 use std::{path::PathBuf, sync::mpsc::channel};
 
-use crate::{bitburner::operation::BitburnerOperation, websocket::client::send_message};
+use crate::bitburner::message::BitburnerMessage;
+use crate::bitburner::operation::BitburnerOperation;
 
 #[cfg(not(test))]
 pub static CONFIG: Lazy<Config> = Lazy::new(|| confy::load("filesync", None).unwrap());
@@ -33,14 +34,20 @@ fn main() -> Result<()> {
     env_logger::init_from_env(env);
     info!("bitburner-oxide initialized with config:");
     info!("{:#?}", &CONFIG);
+    let server = ServerBuilder::new(IoHandler::default())
+        .start(&format!("127.0.0.1:{}", &CONFIG.port).parse()?)?;
     let (sender, receiver) = channel();
     let mut watcher = RecommendedWatcher::new(sender, notify::Config::default())?;
     watcher.watch(&CONFIG.scripts_folder, RecursiveMode::Recursive)?;
     for result in receiver {
         match result {
             Ok(event) => {
-                if event.clone().paths.into_iter().all(|it| is_valid_file(&it)) {
-                    send_message(BitburnerOperation::from(event))?;
+                if event.clone().paths.into_iter().all(|it| is_valid_file(&it)) && !CONFIG.quiet {
+                    let operation = BitburnerOperation::from(event);
+                    let messages: Vec<BitburnerMessage> = Vec::from(operation);
+                    messages
+                        .into_iter()
+                        .for_each(|it| server.broadcaster().send(it).unwrap())
                 }
                 return Ok(());
             }
