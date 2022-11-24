@@ -1,5 +1,5 @@
 use crate::Config;
-use anyhow::{ Error, Context};
+use anyhow::{Context, Error};
 use notify::{event::EventKind, Event};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
@@ -40,7 +40,7 @@ impl BitburnerOperation {
                 Ok(BitburnerOperation {
                     action: Action::CREATE,
                     files: vec![File {
-                        filename: PathBuf::from(extract_file_name(&config, target_file)),
+                        filename: PathBuf::from(extract_file_name(config, target_file)),
                         code: Some(extract_file_contents(target_file)),
                     }],
                 })
@@ -55,11 +55,11 @@ impl BitburnerOperation {
                     action: Action::MOVE,
                     files: vec![
                         File {
-                            filename: PathBuf::from(extract_file_name(&config, target_file)),
+                            filename: PathBuf::from(extract_file_name(config, target_file)),
                             code: None,
                         },
                         File {
-                            filename: PathBuf::from(extract_file_name(&config, destination_file)),
+                            filename: PathBuf::from(extract_file_name(config, destination_file)),
                             code: Some(extract_file_contents(destination_file)),
                         },
                     ],
@@ -70,7 +70,7 @@ impl BitburnerOperation {
                 Ok(BitburnerOperation {
                     action: Action::REMOVE,
                     files: vec![File {
-                        filename: PathBuf::from(extract_file_name(&config, target_file)),
+                        filename: PathBuf::from(extract_file_name(config, target_file)),
                         code: None,
                     }],
                 })
@@ -121,7 +121,10 @@ mod tests {
                 code: Some(String::from(extract_file_contents(&target_file))),
             }],
         };
-        assert_eq!(BitburnerOperation::build_operation(&config, create_event).unwrap(), operation);
+        assert_eq!(
+            BitburnerOperation::build_operation(&config, create_event).unwrap(),
+            operation
+        );
     }
 
     #[test]
@@ -140,7 +143,10 @@ mod tests {
                 code: None,
             }],
         };
-        assert_eq!(BitburnerOperation::build_operation(&config, remove_event).unwrap(), operation);
+        assert_eq!(
+            BitburnerOperation::build_operation(&config, remove_event).unwrap(),
+            operation
+        );
     }
 
     #[test]
@@ -166,7 +172,10 @@ mod tests {
                 },
             ],
         };
-        assert_eq!(BitburnerOperation::build_operation(&config, move_event).unwrap(), operation);
+        assert_eq!(
+            BitburnerOperation::build_operation(&config, move_event).unwrap(),
+            operation
+        );
     }
 
     #[test]
@@ -182,6 +191,9 @@ mod tests {
             action: Action::IGNORE,
             files: vec![],
         };
-        assert_eq!(BitburnerOperation::build_operation(&config, unknown_event).unwrap(), operation);
+        assert_eq!(
+            BitburnerOperation::build_operation(&config, unknown_event).unwrap(),
+            operation
+        );
     }
 }

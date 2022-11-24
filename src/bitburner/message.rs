@@ -143,7 +143,12 @@ impl JsonrpcVersion {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{bitburner::operation::{ extract_file_name, extract_file_contents, File, BitburnerOperation}, config::Config};
+    use crate::{
+        bitburner::operation::{
+            extract_file_contents, extract_file_name, BitburnerOperation, File,
+        },
+        config::Config,
+    };
     use std::path::PathBuf;
 
     #[test]
