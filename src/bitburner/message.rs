@@ -143,17 +143,18 @@ impl JsonrpcVersion {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bitburner::operation::{ extract_file_name, extract_file_contents, File, BitburnerOperation};
+    use crate::{bitburner::operation::{ extract_file_name, extract_file_contents, File, BitburnerOperation}, config::Config};
     use std::path::PathBuf;
 
     #[test]
     fn create_operation_transforms_into_messages() {
+        let config = Config::default();
         let target_file = PathBuf::from("./Cargo.toml");
-        let source_filename = PathBuf::from(extract_file_name(&target_file));
+        let source_filename = PathBuf::from(extract_file_name(&config, &target_file));
         let operation = BitburnerOperation {
             action: Action::CREATE,
             files: vec![File {
-                filename: PathBuf::from(extract_file_name(&target_file)),
+                filename: PathBuf::from(extract_file_name(&config, &target_file)),
                 code: Some(String::from(extract_file_contents(&target_file))),
             }],
         };
@@ -175,19 +176,20 @@ mod tests {
 
     #[test]
     fn move_operation_transforms_into_messages() {
+        let config = Config::default();
         let target_file = PathBuf::from("./Cargo.toml");
         let destination_file = PathBuf::from("./Cargo.lock");
-        let source_filename = PathBuf::from(extract_file_name(&target_file));
-        let destination_filename = PathBuf::from(extract_file_name(&destination_file));
+        let source_filename = PathBuf::from(extract_file_name(&config, &target_file));
+        let destination_filename = PathBuf::from(extract_file_name(&config, &destination_file));
         let operation = BitburnerOperation {
             action: Action::MOVE,
             files: vec![
                 File {
-                    filename: PathBuf::from(extract_file_name(&target_file)),
+                    filename: PathBuf::from(extract_file_name(&config, &target_file)),
                     code: None,
                 },
                 File {
-                    filename: PathBuf::from(extract_file_name(&destination_file)),
+                    filename: PathBuf::from(extract_file_name(&config, &destination_file)),
                     code: Some(String::from(extract_file_contents(&destination_file))),
                 },
             ],
@@ -223,12 +225,13 @@ mod tests {
 
     #[test]
     fn remove_operation_transforms_into_messages() {
+        let config = Config::default();
         let target_file = PathBuf::from("./Cargo.toml");
-        let source_filename = PathBuf::from(extract_file_name(&target_file));
+        let source_filename = PathBuf::from(extract_file_name(&config, &target_file));
         let operation = BitburnerOperation {
             action: Action::REMOVE,
             files: vec![File {
-                filename: PathBuf::from(extract_file_name(&target_file)),
+                filename: PathBuf::from(extract_file_name(&config, &target_file)),
                 code: None,
             }],
         };
