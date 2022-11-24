@@ -25,12 +25,14 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| Config {
 });
 
 fn main() -> Result<()> {
+    println!("hi");
     let env = Env::default()
         .write_style("always")
         .filter(match &CONFIG.quiet {
-            true => "info",
-            false => "error",
+            true => "error",
+            false => "info",
         });
+    println!("{:#?}", env);
     env_logger::init_from_env(env);
     info!("bitburner-oxide initialized with config:");
     info!("{:#?}", &CONFIG);
