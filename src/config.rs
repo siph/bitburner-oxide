@@ -8,8 +8,6 @@ use std::{path::PathBuf, str::FromStr};
 /// Source for bitburner-oxide can be found at https://www.github.com/siph/bitburner-oxide
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    /// Filetypes to synchronize
-    pub allowed_filetypes: Vec<String>,
     /// Set to true to synchronize deletions
     pub allow_deleting_files: bool,
     /// Bitburner websocket port
@@ -20,9 +18,11 @@ pub struct Config {
     pub quiet: bool,
     /// Set true to simulate actions
     pub dry: bool,
-    pub definitions_file: DefinitionsFile,
     /// Synchronize on start
     pub push_all_on_connection: bool,
+    /// Filetypes to synchronize
+    pub allowed_filetypes: Vec<String>,
+    pub definitions_file: DefinitionsFile,
 }
 
 impl Default for Config {
