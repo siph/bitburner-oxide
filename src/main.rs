@@ -11,10 +11,18 @@ use env_logger::WriteStyle;
 use jsonrpc_ws_server::{jsonrpc_core::IoHandler, ServerBuilder};
 use log::LevelFilter;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
-use std::{path::PathBuf, sync::mpsc::channel};
+use std::{fs, path::PathBuf, sync::mpsc::channel};
+use serde_json;
 
 fn main() -> Result<()> {
-    let config: Config = confy::load("filesync", None).unwrap();
+    let config: Config = match fs::File::open("filesync.json") {
+        Ok(filesync) => serde_json::from_reader(filesync).expect("unable to parse `filesync.json`"),
+        Err(_) => {
+            let filesync = Config::default();
+            fs::write("filesync.json", serde_json::to_string_pretty(&filesync)?)?;
+            filesync
+        }
+    };
     env_logger::builder()
         .write_style(WriteStyle::Always)
         .filter(
